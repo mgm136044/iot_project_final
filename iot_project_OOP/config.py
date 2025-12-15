@@ -24,10 +24,10 @@ REPORT_RESPONSE_TIMEOUT = 10.0  # seconds to wait for user response
 AUTO_REPORT_ENABLED = True
 
 # SMS report settings (SOLAPI)
-SMS_API_KEY = "NCSAQFYKNA3STO4Y"  # Replace with your SOLAPI API key
-SMS_API_SECRET = "AGRKNIE1BS6VKQQCXYACG6Z9HAW1XKXA"  # Replace with your SOLAPI API secret
-SMS_FROM_NUMBER = "010-7220-5917"
-SMS_TO_NUMBER = "010-4090-7445"
+SMS_API_KEY = "NCSCIXA2D5BAFBTJ"  # Replace with your SOLAPI API key
+SMS_API_SECRET = "DJ33MVDAPVFQPYOIWDENH2NUHCJLWG4H"  # Replace with your SOLAPI API secret
+SMS_FROM_NUMBER = "010-4090-7445"
+SMS_TO_NUMBER = "010-7220-5917"
 SMS_ENABLED = True  # Set to True to enable SMS reporting
 
 # GPS settings
@@ -41,5 +41,5 @@ NO_FACE_WHILE_DRIVING_TIMEOUT = 10.0  # seconds - Time to wait before activating
 UI_DATA_DIR = "data"  # Relative to project root
 UI_DROWSINESS_JSON = "drowsiness.json"  # File name for drowsiness status
 UI_STATUS_JSON = "status.json"  # File name for system status
-SMS_FROM_NUMBER = "010-7220-5917"
-SMS_TO_NUMBER = "010-4090-7445"
+SMS_FROM_NUMBER = "010-4090-7445"
+SMS_TO_NUMBER = "010-7220-5917"
