@@ -305,12 +305,15 @@ class ReportManager:
         """
         Send SMS report when emergency conditions are met and no response received.
         """
-        # Reload config to get latest SMS settings
+        # Reload config to get latest SMS settings and fallback location
         import config
         importlib.reload(config)
         current_sms_enabled = getattr(config, 'SMS_ENABLED', False)
         current_from_number = getattr(config, 'SMS_FROM_NUMBER', '')
         current_to_number = getattr(config, 'SMS_TO_NUMBER', '')
+        # Fallback location when real GPS is not available
+        fallback_lat = getattr(config, 'FALLBACK_LOCATION_LAT', None)
+        fallback_lon = getattr(config, 'FALLBACK_LOCATION_LON', None)
         
         if not current_sms_enabled or not self.sms_service:
             print("[Report] SMS reporting is disabled or service not available.")
@@ -325,14 +328,29 @@ class ReportManager:
             timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             impact_time_str = self.last_impact_time.strftime("%H:%M:%S") if self.last_impact_time else "Unknown"
             
-            # Get GPS position if available
+            # Get GPS position if available, otherwise fall back to configured static location
             gps_position_str = "Location unavailable"
+            gps_pos = None
+            gps_is_simulated = False
+
             if self.gps_manager:
-                gps_pos = self.gps_manager.get_position()
-                if gps_pos:
-                    gps_position_str = f"Latitude: {gps_pos[0]:.6f}, Longitude: {gps_pos[1]:.6f}"
-                    # Add Google Maps link
-                    gps_position_str += f"\nMap: https://maps.google.com/?q={gps_pos[0]},{gps_pos[1]}"
+                try:
+                    gps_pos = self.gps_manager.get_position()
+                    gps_is_simulated = bool(getattr(self.gps_manager, "simulate", False))
+                except Exception as gps_err:
+                    print(f"[Report] Failed to read GPS position: {gps_err}")
+                    gps_pos = None
+
+            if gps_pos and not gps_is_simulated:
+                # Real GPS position
+                gps_position_str = f"Latitude: {gps_pos[0]:.6f}, Longitude: {gps_pos[1]:.6f}"
+                gps_position_str += f"\nMap: https://maps.google.com/?q={gps_pos[0]},{gps_pos[1]}"
+            elif fallback_lat is not None and fallback_lon is not None:
+                # GPS unavailable or simulation mode → use static configured fallback location
+                gps_position_str = (
+                    f"Fallback location: Latitude: {fallback_lat:.6f}, Longitude: {fallback_lon:.6f}\n"
+                    f"Map: https://maps.google.com/?q={fallback_lat},{fallback_lon}"
+                )
             
             message_text = (
                 f"[EMERGENCY REPORT] Driver Monitoring System\n"

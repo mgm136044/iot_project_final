@@ -40,6 +40,64 @@ fi
 # Create data directory if it doesn't exist
 mkdir -p data
 
+# -------------------------------------------
+# GPS availability check (for emergency report)
+# -------------------------------------------
+echo "📡 Checking GPS availability..."
+GPS_AVAILABLE=false
+
+if command -v python3 &> /dev/null; then
+    GPS_RESULT_JSON=$(python3 - << 'EOF'
+import json
+import sys
+import os
+
+project_root = os.path.dirname(os.path.abspath(__file__))
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
+
+result = None
+try:
+    import check_system
+    result = check_system.check_gps()
+except Exception as e:
+    result = {
+        "status": "ERROR",
+        "message": "GPS check failed",
+        "details": str(e),
+    }
+
+print(json.dumps(result, ensure_ascii=False))
+EOF
+)
+
+    # Save raw result for UI / debugging
+    echo "$GPS_RESULT_JSON" > data/gps_status.json
+
+    if echo "$GPS_RESULT_JSON" | grep -q '"status": "OK"'; then
+        echo "   ✅ GPS module detected and real signal received."
+        GPS_AVAILABLE=true
+    elif echo "$GPS_RESULT_JSON" | grep -q '"status": "WARNING"'; then
+        echo "   ⚠️ GPS is available but may be in simulation mode or weak signal."
+        GPS_AVAILABLE=false
+    else
+        echo "   ❌ GPS not available or check failed."
+        GPS_AVAILABLE=false
+    fi
+
+    # Reflect result into config.GPS_ENABLED so backend uses real GPS when possible
+    if [ "$GPS_AVAILABLE" = true ]; then
+        python3 update_config.py GPS_ENABLED true >/dev/null 2>&1 || true
+    else
+        python3 update_config.py GPS_ENABLED false >/dev/null 2>&1 || true
+    fi
+else
+    echo "   ⚠️ python3 not found. Skipping GPS check."
+fi
+
+export GPS_AVAILABLE
+echo ""
+
 # Check USB webcam availability
 echo "📹 Checking USB webcam availability..."
 USB_CAM_FOUND=false
